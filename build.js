@@ -53,7 +53,7 @@ console.log('  Adding main execution code...');
 const mainCode = fs.readFileSync('src/main.user.js', 'utf8');
 
 // Extract just the main logic (everything after the metadata block)
-const mainLogicMatch = mainCode.match(/\/\/ =\/UserScript==\s*\n([\s\S]*)/);
+const mainLogicMatch = mainCode.match(/\/\/ ==\/UserScript==\s*\n([\s\S]*)/);
 if (mainLogicMatch) {
     bundled += mainLogicMatch[1];
 } else {
