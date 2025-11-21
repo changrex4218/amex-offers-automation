@@ -76,23 +76,17 @@ build.js                  # Build script (bundles src/ into dist/)
    git push origin main
    ```
 
-5. **Install/Update Script - USER MUST DO THIS MANUALLY**
+5. **Install/Update Script - AUTOMATIC via Playwright**
    
-   **CRITICAL:** MCP Playwright CANNOT interact with browser extension popups!
-   
-   **What Kiro AI does:**
    ```javascript
-   // Navigate to GitHub raw URL
+   // Navigate to GitHub raw URL - Tampermonkey auto-installs/updates
    await page.goto('https://raw.githubusercontent.com/changrex4218/amex-offers-automation/main/dist/amex-offers.user.js');
-   // This triggers Tampermonkey detection and redirects to installation page
+   
+   // Tampermonkey automatically detects .user.js and installs/updates
+   // No user interaction needed - happens automatically in background
    ```
    
-   **What USER must do:**
-   - Look for Tampermonkey extension popup/notification
-   - Click "Install" or "Update" button in the popup
-   - Confirm installation
-   
-   **DO NOT ask Kiro AI to do this step - it's impossible via MCP Playwright!**
+   **This step is AUTOMATIC - user never needs to click anything!**
 
 6. **CRITICAL: Refresh Page Before Testing**
    ```javascript
