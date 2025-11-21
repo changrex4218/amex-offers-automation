@@ -774,6 +774,13 @@
                 result.status = 'success';
                 result.success = true;
                 log(`✓ Successfully added: ${offer.merchant} to ${card.name}`);
+                
+                // Update "Last Added" UI element
+                const lastAddedElement = document.getElementById('amex-last-added');
+                if (lastAddedElement) {
+                    lastAddedElement.textContent = `${offer.merchant} - ${card.name}`;
+                    lastAddedElement.style.color = '#4CAF50';
+                }
             } else {
                 result.status = 'unknown';
                 result.success = false;
@@ -971,20 +978,226 @@
         }
     }
 
+
+
+    // ============================================================================
+    // UI COMPONENTS
+    // ============================================================================
+
+    /**
+     * Create and inject the progress panel into the page
+     * @returns {HTMLElement} The created progress panel element
+     */
+    function createProgressPanel() {
+        log('Creating progress panel...');
+
+        // Check if panel already exists
+        const existingPanel = document.getElementById('amex-automation-panel');
+        if (existingPanel) {
+            log('Progress panel already exists');
+            return existingPanel;
+        }
+
+        // Create main panel container
+        const panel = document.createElement('div');
+        panel.id = 'amex-automation-panel';
+        
+        // Apply CSS styling
+        panel.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            max-height: 600px;
+            background: white;
+            border: 2px solid #006FCF;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 999999;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        `;
+
+        // Create panel HTML structure
+        panel.innerHTML = `
+            <div style="padding: 16px; border-bottom: 1px solid #e0e0e0; background: #006FCF; color: white;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: bold;">Amex Offers Automation</h3>
+            </div>
+            
+            <div style="padding: 16px; flex: 1; overflow-y: auto;">
+                <!-- Card List Section -->
+                <div style="margin-bottom: 16px;">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">Cards Detected: <span id="amex-card-count">0</span></div>
+                    <div id="amex-card-list" style="max-height: 150px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px; background: #f9f9f9;">
+                        <div style="color: #666; font-size: 13px;">No cards detected yet...</div>
+                    </div>
+                </div>
+
+                <!-- Status Section -->
+                <div style="margin-bottom: 16px;">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">Status:</div>
+                    <div id="amex-status-message" style="font-size: 13px; color: #333; padding: 8px; background: #f0f0f0; border-radius: 4px; min-height: 20px;">
+                        Ready to start
+                    </div>
+                </div>
+
+                <!-- Progress Bar Section -->
+                <div style="margin-bottom: 16px;">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">
+                        Progress: <span id="amex-progress-percentage">0%</span>
+                    </div>
+                    <div style="width: 100%; height: 24px; background: #e0e0e0; border-radius: 12px; overflow: hidden; position: relative;">
+                        <div id="amex-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #006FCF, #0099FF); transition: width 0.3s ease; display: flex; align-items: center; justify-content: center;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons Section -->
+                <div style="margin-bottom: 16px; display: flex; gap: 8px;">
+                    <button id="amex-btn-start" style="flex: 1; padding: 10px; background: #006FCF; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold;">
+                        Add All Offers
+                    </button>
+                    <button id="amex-btn-pause" style="flex: 0 0 80px; padding: 10px; background: #FFA500; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold;" disabled>
+                        Pause
+                    </button>
+                    <button id="amex-btn-stop" style="flex: 0 0 80px; padding: 10px; background: #DC143C; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold;" disabled>
+                        Stop
+                    </button>
+                </div>
+
+                <!-- Last Added Section -->
+                <div style="margin-bottom: 16px;">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">Last Added:</div>
+                    <div id="amex-last-added" style="font-size: 13px; color: #666; padding: 8px; background: #f0f0f0; border-radius: 4px; min-height: 20px;">
+                        None yet
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div style="border-top: 1px solid #e0e0e0; padding-top: 16px;">
+                    <div style="display: flex; gap: 8px;">
+                        <button id="amex-btn-view-results" style="flex: 1; padding: 8px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">
+                            View Results
+                        </button>
+                        <button id="amex-btn-export-json" style="flex: 1; padding: 8px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">
+                            Export JSON
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Append panel to document body
+        document.body.appendChild(panel);
+
+        log('✓ Progress panel created and added to page');
+
+        return panel;
+    }
+
     /**
      * Update progress UI with current status and percentage
      * @param {string} message - Status message to display
      * @param {number} percentage - Progress percentage (0-100)
      */
     function updateProgress(message, percentage) {
-        // This is a placeholder function that will be implemented in the UI section
-        // For now, just log the progress
         log(`Progress: ${percentage.toFixed(1)}% - ${message}`);
         
-        // TODO: Update actual UI elements when UI is implemented
-        // - Update status message text in progress panel
-        // - Update progress bar width based on percentage
-        // - Update percentage display text
+        // Update status message text in progress panel
+        const statusElement = document.getElementById('amex-status-message');
+        if (statusElement) {
+            statusElement.textContent = message;
+        }
+
+        // Update progress bar width based on percentage
+        const progressBar = document.getElementById('amex-progress-bar');
+        if (progressBar) {
+            // Clamp percentage between 0 and 100
+            const clampedPercentage = Math.max(0, Math.min(100, percentage));
+            progressBar.style.width = `${clampedPercentage}%`;
+        }
+
+        // Update percentage display text
+        const percentageElement = document.getElementById('amex-progress-percentage');
+        if (percentageElement) {
+            percentageElement.textContent = `${percentage.toFixed(1)}%`;
+        }
+    }
+
+    /**
+     * Render the list of detected cards in the progress panel
+     * @param {Array<Object>} cards - Array of card objects from detectAllCards()
+     */
+    function renderCardList(cards) {
+        log(`Rendering card list with ${cards.length} cards`);
+
+        // Update card count
+        const cardCountElement = document.getElementById('amex-card-count');
+        if (cardCountElement) {
+            cardCountElement.textContent = cards.length;
+        }
+
+        // Get card list container
+        const cardListElement = document.getElementById('amex-card-list');
+        if (!cardListElement) {
+            logError('Card list element not found');
+            return;
+        }
+
+        // Clear existing content
+        cardListElement.innerHTML = '';
+
+        // If no cards, show message
+        if (cards.length === 0) {
+            cardListElement.innerHTML = '<div style="color: #666; font-size: 13px;">No cards detected yet...</div>';
+            return;
+        }
+
+        // Create checkbox list items for each card
+        cards.forEach((card, index) => {
+            const cardItem = document.createElement('div');
+            cardItem.style.cssText = `
+                display: flex;
+                align-items: center;
+                padding: 6px 4px;
+                border-bottom: 1px solid #e0e0e0;
+                font-size: 13px;
+            `;
+            
+            // Remove border from last item
+            if (index === cards.length - 1) {
+                cardItem.style.borderBottom = 'none';
+            }
+
+            // Create checkbox
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `amex-card-checkbox-${index}`;
+            checkbox.style.marginRight = '8px';
+            
+            // Mark current card as checked
+            if (index === state.currentCardIndex) {
+                checkbox.checked = true;
+            }
+
+            // Create label
+            const label = document.createElement('label');
+            label.htmlFor = `amex-card-checkbox-${index}`;
+            label.textContent = `Card ${index + 1}: ${card.name}`;
+            label.style.cursor = 'pointer';
+            label.style.flex = '1';
+
+            // Append checkbox and label to card item
+            cardItem.appendChild(checkbox);
+            cardItem.appendChild(label);
+
+            // Append card item to list
+            cardListElement.appendChild(cardItem);
+        });
+
+        log('✓ Card list rendered');
     }
 
     /**
@@ -1018,6 +1231,16 @@
                     body: `Successfully added ${successCount} out of ${totalCount} offers`,
                     icon: 'https://www.americanexpress.com/favicon.ico'
                 });
+            } else if ('Notification' in window && Notification.permission !== 'denied') {
+                // Request permission first
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        new Notification('Amex Offers Automation', {
+                            body: `Successfully added ${successCount} out of ${totalCount} offers`,
+                            icon: 'https://www.americanexpress.com/favicon.ico'
+                        });
+                    }
+                });
             } else {
                 // Fallback: use alert
                 alert(message);
@@ -1025,9 +1248,99 @@
         }
     }
 
-    // ============================================================================
-    // UI COMPONENTS
-    // ============================================================================
+    /**
+     * Export results to JSON file
+     * Creates a downloadable JSON file with all results data
+     */
+    function exportResults() {
+        log('Exporting results to JSON...');
+
+        // Get results from state
+        const results = state.results;
+
+        if (results.length === 0) {
+            alert('No results to export yet. Run the automation first.');
+            return;
+        }
+
+        // Create results object with metadata
+        const exportData = {
+            exportDate: new Date().toISOString(),
+            totalResults: results.length,
+            successCount: results.filter(r => r.success).length,
+            errorCount: results.filter(r => !r.success).length,
+            results: results
+        };
+
+        // Convert to JSON string with pretty formatting
+        const jsonString = JSON.stringify(exportData, null, 2);
+
+        // Create blob from JSON string
+        const blob = new Blob([jsonString], { type: 'application/json' });
+
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        link.download = `amex-offers-results-${timestamp}.json`;
+
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+
+        // Cleanup
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        log(`✓ Results exported: ${results.length} records`);
+    }
+
+    /**
+     * View results in console
+     * Displays a formatted summary of all results
+     */
+    function viewResults() {
+        log('Viewing results...');
+
+        const results = state.results;
+
+        if (results.length === 0) {
+            console.log('[Amex Automation] No results yet. Run the automation first.');
+            alert('No results yet. Run the automation first.');
+            return;
+        }
+
+        // Get summary
+        const summary = getResultsSummary();
+
+        // Log summary
+        console.log('='.repeat(60));
+        console.log('[Amex Automation] RESULTS SUMMARY');
+        console.log('='.repeat(60));
+        console.log(`Total Results: ${summary.total}`);
+        console.log(`Successful: ${summary.success} (${summary.successRate}%)`);
+        console.log(`Failed: ${summary.errors}`);
+        console.log('='.repeat(60));
+
+        // Log detailed results
+        console.log('[Amex Automation] DETAILED RESULTS:');
+        console.table(results.map(r => ({
+            Time: new Date(r.timestamp).toLocaleTimeString(),
+            Card: r.cardName,
+            Merchant: r.merchant,
+            Status: r.status,
+            Success: r.success ? '✓' : '✗',
+            Error: r.error || '-'
+        })));
+
+        console.log('='.repeat(60));
+
+        // Show alert with summary
+        alert(`Results Summary:\n\nTotal: ${summary.total}\nSuccessful: ${summary.success} (${summary.successRate}%)\nFailed: ${summary.errors}\n\nSee console for detailed results.`);
+    }
 
     // ============================================================================
     // INITIALIZATION
@@ -1044,8 +1357,12 @@
         switchToCard,
         addOfferToCard,
         automateAllOffersAllCards,
+        createProgressPanel,
         updateProgress,
+        renderCardList,
         showCompletionNotification,
+        exportResults,
+        viewResults,
         getState,
         setState,
         resetState,
