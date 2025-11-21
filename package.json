@@ -1,0 +1,23 @@
+{
+  "name": "amex-offers-automation",
+  "version": "1.0.0",
+  "description": "Automated system for adding American Express card offers to multiple credit cards",
+  "main": "amex-offers.user.js",
+  "scripts": {
+    "build": "node build.js",
+    "analyze": "node tests/analyze-page.js",
+    "test": "playwright test"
+  },
+  "keywords": [
+    "amex",
+    "automation",
+    "tampermonkey",
+    "playwright"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "playwright": "^1.40.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Test before Git push",
+  "description": "Run Playwright tests before deploying",
+  "when": {
+    "type": "beforeGitPush"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run 'npm test' to validate Amex automation with Playwright MCP before pushing to GitHub"
+  }
+}

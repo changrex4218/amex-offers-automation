@@ -27,23 +27,37 @@ For the Amex Offers Automation project, you MUST use MCP Playwright to validate 
 4. **Validate selectors** - Use MCP Playwright to ensure discovered selectors actually exist on the page
 5. **Capture evidence** - Use MCP Playwright screenshots and console output to verify behavior
 
+## Auto-Login for Testing
+
+When testing on the Amex offers page, you MUST automatically log in using saved credentials:
+
+1. **Navigate to the login page** if redirected
+2. **Use the saved credentials** for user `rex42`
+3. **Fill the login form** using MCP Playwright:
+   - User ID: `rex42`
+   - Password: Use the saved password visible in the password field
+4. **Click the Log In button** to authenticate
+5. **Wait for navigation** to the offers page
+6. **Proceed with testing** once logged in
+
+This ensures seamless testing without manual intervention.
+
 ## Tampermonkey Script Testing Workflow
 
 When implementing or updating the Tampermonkey script (`amex-offers.user.js`):
 
 1. **Make changes** to the Tampermonkey script
-2. **Ask the user to install** the updated script in Tampermonkey:
-   - Say: "Please install the updated script in Tampermonkey. Open Tampermonkey dashboard, create/edit the script, paste the contents of `amex-offers.user.js`, and save it."
+2. **ALWAYS ask the user to install** the updated script in Tampermonkey before testing:
+   - Say: "I've updated the script. Please install it in Tampermonkey: Open Tampermonkey dashboard, edit the 'Amex Offers Automation' script, paste the contents of `amex-offers.user.js`, and save it."
 3. **Wait for user confirmation** that the script is installed
-4. **Ask user to navigate** to the Amex offers page: `https://global.americanexpress.com/offers`
-5. **Ask user to connect** Playwright MCP extension to that tab (icon should turn green)
-6. **Use MCP Playwright** to test the script functionality:
+4. **Then navigate** to the Amex offers page: `https://global.americanexpress.com/offers`
+5. **Use MCP Playwright** to test the script functionality:
    - Take snapshots to verify UI elements
    - Check console output for script messages
    - Test script functions by interacting with the page
    - Verify the script behavior matches requirements
 
-This workflow ensures the script works correctly with Tampermonkey's injection mechanism and CSP bypass.
+**CRITICAL**: NEVER test the script without first asking the user to update it in Tampermonkey. The browser won't pick up file changes automatically.
 
 ## MCP Playwright Usage Examples
 
@@ -72,16 +86,14 @@ console.log('Detected cards:', result);
 1. Read spec documents (requirements.md, design.md, tasks.md)
 2. Understand the specific task and its requirements
 3. Implement the functionality
-4. **Ask user to deploy/install the updated code** (e.g., for Tampermonkey scripts, ask user to update the script in their browser)
-5. **Wait for user confirmation** that code is deployed
-6. Use MCP Playwright to validate the implementation
-7. Fix any issues discovered during validation
-8. **Check in code changes** - Commit your work with a clear message describing what was implemented
-9. Mark task as complete only after validation passes and code is committed
+4. Use MCP Playwright to validate the implementation on the actual website
+5. Fix any issues discovered during validation
+6. **Check in code changes** - Commit your work with a clear message describing what was implemented
+7. Mark task as complete only after validation passes and code is committed
 
-**CRITICAL**: Never skip validation. Never assume code works without testing it. Always ask the user to deploy changes before validating.
+**CRITICAL**: Never skip validation. Never assume code works without testing it. Always test on the actual website using MCP Playwright.
 
-**NEVER create test files that need to be run in the browser console**. Use MCP Playwright tools directly to test functionality. The browser console is not accessible for automated testing.
+**NEVER create test files or validation documents**. Always use the actual website with MCP Playwright tools to test functionality directly. The browser console is not accessible for automated testing, and documentation doesn't prove the code works.
 
 ## Always Check In Code Changes
 

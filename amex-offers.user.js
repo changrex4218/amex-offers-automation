@@ -29,10 +29,11 @@
         },
         cards: {
             // Card switcher element (dropdown, tabs, or buttons)
-            switcher: 'select[data-testid="card-selector"]', // Placeholder - update from analyzer
-            switcherType: 'select', // 'select' | 'tabs' | 'buttons'
+            switcher: '[role="combobox"]', // Combobox for managing accounts
+            switcherType: 'combobox', // 'select' | 'tabs' | 'buttons' | 'combobox'
             // Fallback selectors for card switcher
             switcherFallbacks: [
+                'select[data-testid="card-selector"]',
                 'select.card-switcher',
                 '[role="tablist"]',
                 '.card-selector'
@@ -401,6 +402,85 @@
                     cards.push(card);
                     log(`  Card ${cards.length}: ${text} (value: ${value})`);
                 });
+            }
+            // Combobox-based card switcher (need to expand to see all cards)
+            else if (AMEX_SELECTORS.cards.switcherType === 'combobox' || switcher.getAttribute('role') === 'combobox') {
+                log('Detecting combobox-based card switcher');
+                
+                // Click the combobox to expand the dropdown
+                log('Clicking combobox to expand card list...');
+                switcher.click();
+                
+                // Wait for the dropdown to appear
+                await delay(1000);
+                
+                // Look for the expanded listbox or menu
+                const listbox = document.querySelector('[role="listbox"]') || 
+                               document.querySelector('[role="menu"]') ||
+                               document.querySelector('.account-selector-menu') ||
+                               document.querySelector('[class*="dropdown"]');
+                
+                if (listbox) {
+                    log('Found expanded card list');
+                    
+                    // Find all card options in the listbox
+                    const options = listbox.querySelectorAll('[role="option"]') ||
+                                   listbox.querySelectorAll('li') ||
+                                   listbox.querySelectorAll('a');
+                    
+                    log(`Found ${options.length} card options in dropdown`);
+                    
+                    options.forEach((option, index) => {
+                        const text = option.textContent.trim();
+                        
+                        // Extract account key from href or data attributes
+                        const href = option.getAttribute('href') || '';
+                        const accountKeyMatch = href.match(/account_key=([A-F0-9]+)/);
+                        const accountKey = accountKeyMatch ? accountKeyMatch[1] : 
+                                         option.getAttribute('data-account-key') || 
+                                         option.getAttribute('data-value') ||
+                                         `card-${index}`;
+                        
+                        // Skip empty or invalid options
+                        if (!text || text.length < 3) {
+                            return;
+                        }
+                        
+                        const card = {
+                            name: text,
+                            value: accountKey,
+                            accountKey: accountKey,
+                            element: option,
+                            index: index
+                        };
+                        
+                        cards.push(card);
+                        log(`  Card ${cards.length}: ${text} (accountKey: ${accountKey})`);
+                    });
+                    
+                    // Close the dropdown by clicking elsewhere or pressing Escape
+                    document.body.click();
+                    await delay(500);
+                } else {
+                    logWarn('Could not find expanded card list, falling back to current card only');
+                    
+                    // Fallback: just use the currently displayed card
+                    const text = switcher.textContent.trim();
+                    const currentUrl = window.location.href;
+                    const accountKeyMatch = currentUrl.match(/account_key=([A-F0-9]+)/);
+                    const accountKey = accountKeyMatch ? accountKeyMatch[1] : 'default';
+                    
+                    if (text && text.length > 0) {
+                        cards.push({
+                            name: text,
+                            value: accountKey,
+                            accountKey: accountKey,
+                            element: switcher,
+                            index: 0
+                        });
+                        log(`  Card 1: ${text} (accountKey: ${accountKey})`);
+                    }
+                }
             }
             // Fallback: try to detect automatically
             else {

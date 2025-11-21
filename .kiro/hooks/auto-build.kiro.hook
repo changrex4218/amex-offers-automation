@@ -1,0 +1,12 @@
+{
+  "name": "Auto-build Amex script",
+  "description": "Rebuild bundle when source changes",
+  "when": {
+    "type": "fileEdit",
+    "patterns": ["src/**/*.js"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run 'npm run build' to bundle the Amex automation script"
+  }
+}
