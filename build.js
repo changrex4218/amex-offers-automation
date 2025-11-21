@@ -19,10 +19,10 @@ const metadata = `// ==UserScript==
 // @namespace    http://tampermonkey.net/
 // @version      ${version}
 // @description  Automatically add all Amex offers to all cards
-// @author       changrex
+// @author       changrex4218
 // @match        https://global.americanexpress.com/offers*
-// @updateURL    https://raw.githubusercontent.com/changrex/amex-offers-automation/main/dist/amex-offers.user.js
-// @downloadURL  https://raw.githubusercontent.com/changrex/amex-offers-automation/main/dist/amex-offers.user.js
+// @updateURL    https://raw.githubusercontent.com/changrex4218/amex-offers-automation/main/dist/amex-offers.user.js
+// @downloadURL  https://raw.githubusercontent.com/changrex4218/amex-offers-automation/main/dist/amex-offers.user.js
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
