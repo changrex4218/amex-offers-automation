@@ -694,6 +694,115 @@
         }
     }
 
+    /**
+     * Add a single offer to the current card
+     * @param {Object} offer - Offer object from detectOffersForCurrentCard()
+     * @param {Object} card - Card object from detectAllCards()
+     * @returns {Promise<Object>} Result object with timestamp, cardName, merchant, status, success
+     */
+    async function addOfferToCard(offer, card) {
+        log(`Adding offer: ${offer.merchant} to ${card.name}`);
+
+        // Create result object with initial values
+        const result = {
+            timestamp: new Date().toISOString(),
+            cardName: card.name,
+            merchant: offer.merchant,
+            status: 'unknown',
+            success: false
+        };
+
+        try {
+            // Validate inputs
+            if (!offer || !offer.addButton) {
+                throw new Error('Invalid offer object: missing addButton');
+            }
+
+            if (!card || !card.name) {
+                throw new Error('Invalid card object: missing name');
+            }
+
+            // Check if add button is still available and not disabled
+            if (offer.addButton.disabled || offer.addButton.getAttribute('disabled') !== null) {
+                throw new Error('Add button is disabled');
+            }
+
+            // Click the offer's add button element
+            log(`Clicking add button for: ${offer.merchant}`);
+            offer.addButton.click();
+
+            // Wait for the recommended delay between offers
+            log(`Waiting ${AMEX_SELECTORS.timing.betweenOffers}ms for offer addition to complete...`);
+            await delay(AMEX_SELECTORS.timing.betweenOffers);
+
+            // Check for success indicator element
+            let successIndicator = await waitForElement(AMEX_SELECTORS.feedback.success, 5000);
+            
+            // Try fallback selectors if primary fails
+            if (!successIndicator && AMEX_SELECTORS.feedback.successFallbacks) {
+                log('Primary success indicator not found, trying fallbacks...');
+                successIndicator = await waitForElementWithFallbacks(
+                    AMEX_SELECTORS.feedback.successFallbacks,
+                    5000
+                );
+            }
+
+            // Alternative success check: verify the add button is now disabled or has changed state
+            const buttonNowDisabled = offer.addButton.disabled || 
+                                     offer.addButton.getAttribute('disabled') !== null ||
+                                     offer.addButton.getAttribute('aria-disabled') === 'true';
+
+            // Alternative success check: look for "added" indicator on the offer card
+            let addedIndicator = null;
+            if (offer.element) {
+                addedIndicator = offer.element.querySelector(AMEX_SELECTORS.offers.alreadyAdded);
+                
+                if (!addedIndicator && AMEX_SELECTORS.offers.alreadyAddedFallbacks) {
+                    for (const fallbackSelector of AMEX_SELECTORS.offers.alreadyAddedFallbacks) {
+                        addedIndicator = offer.element.querySelector(fallbackSelector);
+                        if (addedIndicator) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Determine success based on multiple indicators
+            const isSuccess = successIndicator || buttonNowDisabled || addedIndicator;
+
+            if (isSuccess) {
+                result.status = 'success';
+                result.success = true;
+                log(`✓ Successfully added: ${offer.merchant} to ${card.name}`);
+            } else {
+                result.status = 'unknown';
+                result.success = false;
+                result.error = 'No success indicator found, but no error occurred';
+                logWarn(`? Uncertain status for: ${offer.merchant} to ${card.name}`);
+            }
+
+            // Add result to state
+            addResult(result);
+
+            return result;
+
+        } catch (error) {
+            // Error handling: catch errors and record them
+            logError(`Error adding offer ${offer.merchant} to ${card.name}:`, error);
+
+            // Update result object with error information
+            result.status = 'error';
+            result.success = false;
+            result.error = error.message || 'Unknown error occurred';
+
+            // Add error result to state
+            addResult(result);
+
+            // Return error result object
+            return result;
+        }
+    }
+
     // ============================================================================
     // ORCHESTRATION
     // ============================================================================
@@ -715,6 +824,7 @@
         detectAllCards,
         detectOffersForCurrentCard,
         switchToCard,
+        addOfferToCard,
         getState,
         setState,
         resetState,

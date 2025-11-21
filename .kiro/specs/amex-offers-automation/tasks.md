@@ -149,10 +149,17 @@
   - Return boolean success status
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 5. Implement offer detection and filtering
+- [x] 5. Implement offer detection and filtering
+
+
+
+
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9_
 
-- [ ] 5.1 Implement offer detection with filtering
+- [x] 5.1 Implement offer detection with filtering
+
+
+
   - Write detectOffersForCurrentCard() function that waits for offers container
   - Query all offer card elements using AMEX_SELECTORS.offers.card
   - Filter out offers that have already-added indicator present
@@ -165,10 +172,16 @@
   - Use MCP Playwright to validate offer detection filters correctly
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9_
 
-- [ ] 6. Implement offer addition logic
+- [x] 6. Implement offer addition logic
+
+
+
+
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
-- [ ] 6.1 Implement single offer addition
+- [x] 6.1 Implement single offer addition
+
+
   - Write addOfferToCard() function accepting offer and card parameters
   - Wrap logic in try-catch block for error handling
   - Click the offer's add button element
@@ -180,7 +193,8 @@
   - Use MCP Playwright to validate offer addition triggers API calls
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.6, 7.7_
 
-- [ ] 6.2 Add error handling for offer addition
+- [x] 6.2 Add error handling for offer addition
+
   - Catch errors in addOfferToCard() function
   - Log error message to console
   - Create result object with status 'error' and error message
