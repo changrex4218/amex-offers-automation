@@ -22,6 +22,21 @@
     'use strict';
 
     console.log('[Amex Auto] Script loaded (Development Version)');
+    
+    // Debug: Check if required classes are loaded
+    console.log('[Amex Auto] Checking dependencies...');
+    console.log('[Amex Auto] AmexOfferAutomation:', typeof AmexOfferAutomation);
+    console.log('[Amex Auto] GoogleSheetsLogger:', typeof GoogleSheetsLogger);
+    console.log('[Amex Auto] AmexUI:', typeof AmexUI);
+    console.log('[Amex Auto] delay function:', typeof delay);
+    
+    if (typeof AmexOfferAutomation === 'undefined') {
+        console.error('[Amex Auto] ERROR: AmexOfferAutomation class not loaded!');
+        console.error('[Amex Auto] Check Tampermonkey settings: "Allow access to file URLs" must be enabled');
+        console.error('[Amex Auto] Check file paths in @require directives');
+        alert('Amex Automation Error: Required files not loaded. Check console for details.');
+        return;
+    }
 
     // Configuration - Selector Map (Discovered from actual Amex page)
     const AMEX_SELECTORS = {

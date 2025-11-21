@@ -380,8 +380,3 @@ class AmexOfferAutomation {
 if (typeof window !== 'undefined') {
     window.AmexOfferAutomation = AmexOfferAutomation;
 }
-
-// Export
-if (typeof window !== 'undefined') {
-    window.AmexOfferAutomation = AmexOfferAutomation;
-}
