@@ -82,23 +82,35 @@ build.js                  # Build script (bundles src/ into dist/)
    await page.goto('https://raw.githubusercontent.com/changrex4218/amex-offers-automation/main/dist/amex-offers.user.js');
    
    // Tampermonkey will detect the script and show install/update dialog
-   // User must click "Install" or "Update" in Tampermonkey
+   // User must click "Install" or "Update" in Tampermonkey extension popup
    ```
 
-6. **Test on Actual Amex Page**
+6. **CRITICAL: Refresh Page Before Testing**
    ```javascript
    // Navigate to Amex offers page
    await page.goto('https://global.americanexpress.com/offers');
    
-   // Wait for script to load
-   await page.waitForTimeout(2000);
+   // ALWAYS reload to ensure latest script version loads
+   await page.reload();
    
+   // Wait for script to load
+   await page.waitForTimeout(3000);
+   ```
+
+7. **Test Script Functionality**
+   ```javascript
    // Test script functionality
    const result = await page.evaluate(() => {
-     return window.AmexAutomation.automation.discoverCards();
+     return window.AmexAutomation?.automation?.discoverCards();
    });
    
    console.log('Test result:', result);
+   
+   // Check if UI loaded
+   const uiLoaded = await page.evaluate(() => {
+     return !!document.getElementById('amex-automation-panel');
+   });
+   console.log('UI panel loaded:', uiLoaded);
    ```
 
 7. **Verify and Debug**
