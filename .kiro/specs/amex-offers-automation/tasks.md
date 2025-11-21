@@ -309,6 +309,7 @@
 
 
 
+
   - _Requirements: 3.3_
 
 
@@ -323,7 +324,11 @@
   - _Requirements: 3.3_
 
 
-- [ ] 9.2 Attach button event handlers
+- [x] 9.2 Attach button event handlers
+
+
+
+
   - Add click handler to "Add All Offers" button that calls automateAllOffersAllCards()
   - Add click handler to "Pause" button that sets isPaused state
   - Add click handler to "Stop" button that sets isRunning to false
