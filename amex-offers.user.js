@@ -478,6 +478,140 @@
         }
     }
 
+    /**
+     * Detect all available offers for the current card
+     * Filters out offers that are already added and offers without valid add buttons
+     * @returns {Promise<Array<Object>>} Array of offer objects with merchant, addButton, element
+     */
+    async function detectOffersForCurrentCard() {
+        log('Detecting offers for current card...');
+
+        try {
+            // Wait for offers container element
+            let container = await waitForElement(AMEX_SELECTORS.offers.container);
+            
+            // If primary selector fails, try fallbacks
+            if (!container && AMEX_SELECTORS.offers.containerFallbacks) {
+                log('Primary offers container not found, trying fallbacks...');
+                container = await waitForElementWithFallbacks(AMEX_SELECTORS.offers.containerFallbacks);
+            }
+
+            if (!container) {
+                logError('Offers container element not found');
+                return [];
+            }
+
+            log('Offers container found');
+
+            // Query all offer card elements using the discovered selector
+            let offerCards = container.querySelectorAll(AMEX_SELECTORS.offers.card);
+            
+            // If primary selector fails, try fallbacks
+            if (offerCards.length === 0 && AMEX_SELECTORS.offers.cardFallbacks) {
+                log('No offer cards found with primary selector, trying fallbacks...');
+                for (const fallbackSelector of AMEX_SELECTORS.offers.cardFallbacks) {
+                    offerCards = container.querySelectorAll(fallbackSelector);
+                    if (offerCards.length > 0) {
+                        log(`Found ${offerCards.length} offer cards with fallback selector: ${fallbackSelector}`);
+                        break;
+                    }
+                }
+            }
+
+            if (offerCards.length === 0) {
+                log('No offer cards found on page');
+                return [];
+            }
+
+            log(`Found ${offerCards.length} total offer cards`);
+
+            const availableOffers = [];
+
+            // Process each offer card
+            for (let i = 0; i < offerCards.length; i++) {
+                const offerCard = offerCards[i];
+
+                // Check for already-added indicator
+                let alreadyAddedIndicator = offerCard.querySelector(AMEX_SELECTORS.offers.alreadyAdded);
+                
+                // Try fallback selectors if primary fails
+                if (!alreadyAddedIndicator && AMEX_SELECTORS.offers.alreadyAddedFallbacks) {
+                    for (const fallbackSelector of AMEX_SELECTORS.offers.alreadyAddedFallbacks) {
+                        alreadyAddedIndicator = offerCard.querySelector(fallbackSelector);
+                        if (alreadyAddedIndicator) {
+                            break;
+                        }
+                    }
+                }
+
+                // If already-added indicator is present, skip this offer
+                if (alreadyAddedIndicator) {
+                    log(`  Offer ${i + 1}: Already added, skipping`);
+                    continue;
+                }
+
+                // Extract merchant name using primary selector
+                let merchantElement = offerCard.querySelector(AMEX_SELECTORS.offers.merchantName);
+                
+                // Try fallback selectors if primary fails
+                if (!merchantElement && AMEX_SELECTORS.offers.merchantNameFallbacks) {
+                    for (const fallbackSelector of AMEX_SELECTORS.offers.merchantNameFallbacks) {
+                        merchantElement = offerCard.querySelector(fallbackSelector);
+                        if (merchantElement && merchantElement.textContent.trim()) {
+                            break;
+                        }
+                    }
+                }
+
+                // Get merchant name text
+                const merchantName = merchantElement ? merchantElement.textContent.trim() : `Unknown Merchant ${i + 1}`;
+
+                // Locate add button using primary selector
+                let addButton = offerCard.querySelector(AMEX_SELECTORS.offers.addButton);
+                
+                // Try fallback selectors if primary fails
+                if (!addButton && AMEX_SELECTORS.offers.addButtonFallbacks) {
+                    for (const fallbackSelector of AMEX_SELECTORS.offers.addButtonFallbacks) {
+                        addButton = offerCard.querySelector(fallbackSelector);
+                        if (addButton) {
+                            break;
+                        }
+                    }
+                }
+
+                // If no add button is found, exclude this offer
+                if (!addButton) {
+                    logWarn(`  Offer ${i + 1} (${merchantName}): No add button found, skipping`);
+                    continue;
+                }
+
+                // Check if add button is disabled
+                if (addButton.disabled || addButton.getAttribute('disabled') !== null) {
+                    log(`  Offer ${i + 1} (${merchantName}): Add button is disabled, skipping`);
+                    continue;
+                }
+
+                // Create offer object
+                const offer = {
+                    merchant: merchantName,
+                    addButton: addButton,
+                    element: offerCard
+                };
+
+                availableOffers.push(offer);
+                log(`  Offer ${availableOffers.length}: ${merchantName} - Available`);
+            }
+
+            log(`✓ Detected ${availableOffers.length} available offers (${offerCards.length - availableOffers.length} already added or unavailable)`);
+
+            return availableOffers;
+
+        } catch (error) {
+            logError('Error detecting offers:', error);
+            return [];
+        }
+    }
+
     // ============================================================================
     // ACTION FUNCTIONS
     // ============================================================================
@@ -572,6 +706,22 @@
     // INITIALIZATION
     // ============================================================================
 
+    // ============================================================================
+    // EXPOSE FUNCTIONS FOR TESTING
+    // ============================================================================
+    
+    // Expose functions globally for testing purposes
+    window.AmexAutomation = {
+        detectAllCards,
+        detectOffersForCurrentCard,
+        switchToCard,
+        getState,
+        setState,
+        resetState,
+        getResultsSummary
+    };
+
     console.log('[Amex Automation] Script loaded - v1.0.0');
+    console.log('[Amex Automation] Functions exposed to window.AmexAutomation');
 
 })();
