@@ -3,14 +3,14 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.0.0-dev
 // @description  Automatically add all Amex offers to all cards (Development Version)
-// @author       You
+// @author       changrex
 // @match        https://global.americanexpress.com/offers*
 // @require      file:///C:/Users/weiwe/Projects/tempmonkey script to add and store all amex offers/src/lib/utils.js
 // @require      file:///C:/Users/weiwe/Projects/tempmonkey script to add and store all amex offers/src/lib/amex-core.js
 // @require      file:///C:/Users/weiwe/Projects/tempmonkey script to add and store all amex offers/src/lib/google-sheets.js
 // @require      file:///C:/Users/weiwe/Projects/tempmonkey script to add and store all amex offers/src/lib/ui-components.js
-// @updateURL    https://raw.githubusercontent.com/yourusername/amex-offers-automation/main/dist/amex-offers.user.js
-// @downloadURL  https://raw.githubusercontent.com/yourusername/amex-offers-automation/main/dist/amex-offers.user.js
+// @updateURL    https://raw.githubusercontent.com/changrex/amex-offers-automation/main/dist/amex-offers.user.js
+// @downloadURL  https://raw.githubusercontent.com/changrex/amex-offers-automation/main/dist/amex-offers.user.js
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
