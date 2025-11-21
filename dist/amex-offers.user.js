@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amex Offers Automation
 // @namespace    http://tampermonkey.net/
-// @version      1.0.3
+// @version      1.0.5
 // @description  Automatically add all Amex offers to all cards
 // @author       changrex4218
 // @match        https://global.americanexpress.com/offers*
@@ -110,10 +110,6 @@
             return fallback;
         }
     }
-    
-    
-    }
-    
 
     // ===== amex-core.js =====
     /**
@@ -493,10 +489,6 @@
             Object.assign(this.state, updates);
         }
     }
-    
-    
-    }
-    
 
     // ===== google-sheets.js =====
     /**
@@ -594,10 +586,6 @@
             }
         }
     }
-    
-    
-    }
-    
 
     // ===== ui-components.js =====
     /**
@@ -907,10 +895,6 @@
             alert(`Results Summary:\n\nTotal: ${results.length}\nSuccessful: ${successCount}\nFailed: ${errorCount}\n\nSee console for details.`);
         }
     }
-    
-    
-    }
-    
 
 (function() {
     'use strict';
@@ -1184,4 +1168,5 @@
         selectors: AMEX_SELECTORS
     };
 
+})();
 })();

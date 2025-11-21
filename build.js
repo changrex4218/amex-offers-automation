@@ -37,15 +37,16 @@ let bundled = metadata + '(function() {\n    \'use strict\';\n\n';
 // Bundle library files
 files.forEach(file => {
     console.log(`  Adding ${file}...`);
-    const content = fs.readFileSync(file, 'utf8');
+    let content = fs.readFileSync(file, 'utf8');
     
-    // Remove export statements and window assignments
-    const cleaned = content
-        .replace(/\/\/ Export[\s\S]*?window\.\w+ = [\s\S]*?;/g, '')
-        .replace(/if \(typeof window !== 'undefined'\) \{[\s\S]*?\}/g, '');
+    // Remove the export block at the end (everything after "// Export")
+    const exportIndex = content.lastIndexOf('// Export');
+    if (exportIndex !== -1) {
+        content = content.substring(0, exportIndex).trim();
+    }
     
     bundled += `    // ===== ${path.basename(file)} =====\n`;
-    bundled += cleaned.split('\n').map(line => '    ' + line).join('\n') + '\n\n';
+    bundled += content.split('\n').map(line => '    ' + line).join('\n') + '\n\n';
 });
 
 // Add main execution code
