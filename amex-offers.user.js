@@ -1346,6 +1346,251 @@
     // INITIALIZATION
     // ============================================================================
 
+    /**
+     * Initialize the UI and set up event handlers
+     * Main entry point for the automation script
+     */
+    async function initializeUI() {
+        log('Initializing Amex Offers Automation...');
+
+        try {
+            // Verify page URL matches Amex offers page pattern
+            const currentUrl = window.location.href;
+            if (!currentUrl.includes('global.americanexpress.com/offers')) {
+                logWarn('Not on Amex offers page, skipping initialization');
+                return;
+            }
+
+            log('✓ On Amex offers page, proceeding with initialization');
+
+            // Call createProgressPanel() to build UI
+            const panel = createProgressPanel();
+            if (!panel) {
+                logError('Failed to create progress panel');
+                return;
+            }
+
+            // Wait a moment for page to be fully ready
+            await delay(1000);
+
+            // Call detectAllCards() and render card list
+            log('Detecting cards...');
+            const cards = await detectAllCards();
+            
+            // Store cards in state
+            setState({ cards: cards });
+
+            // Render card list in UI
+            renderCardList(cards);
+
+            if (cards.length > 0) {
+                log(`✓ Detected ${cards.length} cards`);
+                updateProgress(`Ready! Detected ${cards.length} cards. Click "Add All Offers" to start.`, 0);
+            } else {
+                logWarn('No cards detected. Please check if you are logged in.');
+                updateProgress('No cards detected. Please check if you are logged in.', 0);
+            }
+
+            // Attach event handlers to all buttons
+            attachEventHandlers();
+
+            // Set up initial state
+            setState({
+                isRunning: false,
+                isPaused: false,
+                currentCardIndex: 0,
+                results: [],
+                totalOffers: 0
+            });
+
+            log('✓ Initialization complete');
+
+        } catch (error) {
+            logError('Error during initialization:', error);
+        }
+    }
+
+    /**
+     * Attach event handlers to UI buttons
+     */
+    function attachEventHandlers() {
+        log('Attaching event handlers...');
+
+        // Add click handler to "Add All Offers" button
+        const startButton = document.getElementById('amex-btn-start');
+        if (startButton) {
+            startButton.addEventListener('click', async () => {
+                log('Start button clicked');
+
+                // Disable start button during automation
+                startButton.disabled = true;
+                startButton.style.opacity = '0.5';
+                startButton.style.cursor = 'not-allowed';
+
+                // Enable pause and stop buttons
+                const pauseButton = document.getElementById('amex-btn-pause');
+                const stopButton = document.getElementById('amex-btn-stop');
+                if (pauseButton) {
+                    pauseButton.disabled = false;
+                    pauseButton.style.opacity = '1';
+                    pauseButton.style.cursor = 'pointer';
+                }
+                if (stopButton) {
+                    stopButton.disabled = false;
+                    stopButton.style.opacity = '1';
+                    stopButton.style.cursor = 'pointer';
+                }
+
+                try {
+                    // Get cards from state
+                    const cards = state.cards;
+
+                    if (!cards || cards.length === 0) {
+                        alert('No cards detected. Please refresh the page and try again.');
+                        return;
+                    }
+
+                    // Call automateAllOffersAllCards()
+                    log('Starting automation...');
+                    const results = await automateAllOffersAllCards(cards);
+                    log(`Automation completed with ${results.length} results`);
+
+                } catch (error) {
+                    logError('Error during automation:', error);
+                    alert(`Automation error: ${error.message}`);
+                } finally {
+                    // Re-enable start button
+                    startButton.disabled = false;
+                    startButton.style.opacity = '1';
+                    startButton.style.cursor = 'pointer';
+
+                    // Disable pause and stop buttons
+                    if (pauseButton) {
+                        pauseButton.disabled = true;
+                        pauseButton.style.opacity = '0.5';
+                        pauseButton.style.cursor = 'not-allowed';
+                    }
+                    if (stopButton) {
+                        stopButton.disabled = true;
+                        stopButton.style.opacity = '0.5';
+                        stopButton.style.cursor = 'not-allowed';
+                    }
+                }
+            });
+            log('✓ Start button handler attached');
+        }
+
+        // Add click handler to "Pause" button
+        const pauseButton = document.getElementById('amex-btn-pause');
+        if (pauseButton) {
+            pauseButton.addEventListener('click', () => {
+                log('Pause button clicked');
+
+                // Toggle isPaused state
+                const newPausedState = !state.isPaused;
+                setState({ isPaused: newPausedState });
+
+                // Update button text and style
+                if (newPausedState) {
+                    pauseButton.textContent = 'Resume';
+                    pauseButton.style.background = '#4CAF50';
+                    log('Automation paused');
+                    updateProgress('Automation paused. Click Resume to continue.', state.currentCardIndex / state.cards.length * 100);
+                } else {
+                    pauseButton.textContent = 'Pause';
+                    pauseButton.style.background = '#FFA500';
+                    log('Automation resumed');
+                }
+            });
+            log('✓ Pause button handler attached');
+        }
+
+        // Add click handler to "Stop" button
+        const stopButton = document.getElementById('amex-btn-stop');
+        if (stopButton) {
+            stopButton.addEventListener('click', () => {
+                log('Stop button clicked');
+
+                // Set isRunning to false
+                setState({ isRunning: false, isPaused: false });
+
+                // Update pause button text back to "Pause"
+                const pauseBtn = document.getElementById('amex-btn-pause');
+                if (pauseBtn) {
+                    pauseBtn.textContent = 'Pause';
+                    pauseBtn.style.background = '#FFA500';
+                }
+
+                log('Automation stopped by user');
+                updateProgress('Automation stopped by user', 0);
+            });
+            log('✓ Stop button handler attached');
+        }
+
+        // Add click handler to "View Results" button
+        const viewResultsButton = document.getElementById('amex-btn-view-results');
+        if (viewResultsButton) {
+            viewResultsButton.addEventListener('click', () => {
+                log('View Results button clicked');
+                viewResults();
+            });
+            log('✓ View Results button handler attached');
+        }
+
+        // Add click handler to "Export JSON" button
+        const exportButton = document.getElementById('amex-btn-export-json');
+        if (exportButton) {
+            exportButton.addEventListener('click', () => {
+                log('Export JSON button clicked');
+                exportResults();
+            });
+            log('✓ Export JSON button handler attached');
+        }
+
+        log('✓ All event handlers attached');
+    }
+
+    /**
+     * Automatic initialization on page load
+     * Called when script loads and page is ready
+     */
+    function autoInitialize() {
+        // Verify page URL matches Amex offers page pattern
+        const currentUrl = window.location.href;
+        
+        if (!currentUrl.includes('global.americanexpress.com/offers')) {
+            log('Not on Amex offers page, script will not initialize');
+            return;
+        }
+
+        // Log initialization message to console
+        log('='.repeat(60));
+        log('Amex Offers Automation v1.0.0');
+        log('Script loaded and ready to initialize');
+        log('='.repeat(60));
+
+        // Wait for page to be fully ready
+        if (document.readyState === 'loading') {
+            log('Document still loading, waiting for DOMContentLoaded...');
+            document.addEventListener('DOMContentLoaded', () => {
+                log('DOMContentLoaded event fired');
+                // Wait a bit more for dynamic content
+                setTimeout(() => {
+                    initializeUI();
+                }, 2000);
+            });
+        } else {
+            log('Document already loaded');
+            // Wait a bit for dynamic content
+            setTimeout(() => {
+                initializeUI();
+            }, 2000);
+        }
+    }
+
+    // Call autoInitialize when script loads
+    autoInitialize();
+
     // ============================================================================
     // EXPOSE FUNCTIONS FOR TESTING
     // ============================================================================
@@ -1366,10 +1611,11 @@
         getState,
         setState,
         resetState,
-        getResultsSummary
+        getResultsSummary,
+        initializeUI,
+        attachEventHandlers
     };
 
-    console.log('[Amex Automation] Script loaded - v1.0.0');
-    console.log('[Amex Automation] Functions exposed to window.AmexAutomation');
+    log('Script loaded and functions exposed to window.AmexAutomation');
 
 })();
