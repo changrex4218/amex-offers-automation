@@ -176,12 +176,35 @@ console.log('UI panel exists:', panelExists);
 
 ### Auto-Updates for Users
 
-Once users install from GitHub:
-- Tampermonkey checks GitHub daily for new versions
-- Compares `@version` numbers
+Once users install from GitHub, Tampermonkey automatically handles updates:
+
+**Default Auto-Update Behavior:**
+- Tampermonkey checks GitHub **every 24 hours** for new versions
+- Compares `@version` numbers (current: 1.0.5)
 - Downloads from `@downloadURL` if newer version available
-- User gets "Update available" notification
-- One-click update
+- User gets "Update available" notification in Tampermonkey dashboard
+- One-click update to install new version
+
+**Manual Update Check:**
+Users can force an immediate update check:
+1. Open Tampermonkey dashboard
+2. Click on the script name
+3. Click "Check for updates" button
+4. If update available, click "Update" to install
+
+**Changing Update Frequency:**
+Users can customize the update check interval:
+1. Open Tampermonkey dashboard
+2. Go to Settings tab
+3. Find "Script Update" section
+4. Change "Check Interval" (options: Never, 1 hour, 6 hours, 12 hours, 24 hours, 7 days, 30 days)
+5. Default is 24 hours
+
+**How It Works:**
+- Script has `@updateURL` pointing to GitHub raw file
+- Tampermonkey fetches the file and checks `@version` number
+- If GitHub version > installed version, update is triggered
+- Example: Installed 1.0.5 → GitHub has 1.0.6 → Auto-update triggers
 
 ## GitHub Integration
 
