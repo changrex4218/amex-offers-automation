@@ -50,49 +50,115 @@ https://global.americanexpress.com/offers
 build.js                  # Build script (bundles src/ into dist/)
 ```
 
-## Development Workflow
+## Development Workflow (Complete Loop)
 
-### 1. Edit Source Files
-Edit modular source files in `src/lib/`:
-- `utils.js` - Helper functions
-- `amex-core.js` - Core automation logic
-- `google-sheets.js` - Sheets integration
-- `ui-components.js` - UI components
+### The Complete Test-Deploy-Verify Loop
 
-### 2. Auto-Build
-Kiro hook automatically builds on save:
+**Critical:** Always follow this complete loop for every change:
+
+1. **Edit Source Files**
+   - Edit `src/lib/*.js` or `src/main.user.js`
+   - Kiro auto-build hook triggers on save
+
+2. **Build Production Bundle**
+   ```bash
+   npm run build
+   ```
+
+3. **Increment Version**
+   - Edit `dist/amex-offers.user.js`
+   - Update `@version 1.0.X` (increment patch number)
+
+4. **Commit and Push to GitHub**
+   ```bash
+   git add src/ dist/
+   git commit -m "v1.0.X: Description of changes"
+   git push origin main
+   ```
+
+5. **Install/Update Script via MCP Playwright**
+   ```javascript
+   // Navigate to GitHub raw URL to trigger Tampermonkey install/update
+   await page.goto('https://raw.githubusercontent.com/changrex4218/amex-offers-automation/main/dist/amex-offers.user.js');
+   
+   // Tampermonkey will detect the script and show install/update dialog
+   // User must click "Install" or "Update" in Tampermonkey
+   ```
+
+6. **Test on Actual Amex Page**
+   ```javascript
+   // Navigate to Amex offers page
+   await page.goto('https://global.americanexpress.com/offers');
+   
+   // Wait for script to load
+   await page.waitForTimeout(2000);
+   
+   // Test script functionality
+   const result = await page.evaluate(() => {
+     return window.AmexAutomation.automation.discoverCards();
+   });
+   
+   console.log('Test result:', result);
+   ```
+
+7. **Verify and Debug**
+   - Check console logs for errors
+   - Verify UI panel appears
+   - Test button functionality
+   - Check card detection
+   - Test offer detection
+
+8. **If Issues Found → Repeat Loop**
+   - Go back to step 1
+   - Make fixes
+   - Follow complete loop again
+
+### Quick Reference Commands
+
 ```bash
-npm run build  # Manual build if needed
-```
-
-### 3. Test with MCP Playwright
-Use MCP Playwright to test functionality:
-```javascript
-// Navigate to Amex offers page
-await page.goto('https://global.americanexpress.com/offers');
-
-// Test script functionality
-const result = await page.evaluate(() => {
-  return window.AmexAutomation.automation.discoverCards();
-});
-```
-
-### 4. Deploy to GitHub
-```bash
-# Increment version in dist/amex-offers.user.js
-# @version 1.0.X
+# Build
+npm run build
 
 # Commit and push
-git add dist/amex-offers.user.js
-git commit -m "v1.0.X: Description"
-git push origin main
+git add . && git commit -m "v1.0.X: Description" && git push origin main
 ```
 
-### 5. Auto-Updates
-Users get automatic updates via Tampermonkey:
-- Checks GitHub daily for new versions
+### MCP Playwright Testing Pattern
+
+```javascript
+// 1. Install/update script
+await page.goto('https://raw.githubusercontent.com/changrex4218/amex-offers-automation/main/dist/amex-offers.user.js');
+// User clicks Install/Update in Tampermonkey
+
+// 2. Navigate to test page
+await page.goto('https://global.americanexpress.com/offers');
+
+// 3. Wait for script to load
+await page.waitForTimeout(2000);
+
+// 4. Test functionality
+const cards = await page.evaluate(() => window.AmexAutomation?.automation?.discoverCards());
+console.log('Cards detected:', cards);
+
+// 5. Check UI
+const panelExists = await page.evaluate(() => !!document.getElementById('amex-automation-panel'));
+console.log('UI panel exists:', panelExists);
+```
+
+### Version Numbering
+
+- **Patch (1.0.X)**: Bug fixes, selector updates, minor changes
+- **Minor (1.X.0)**: New features, significant improvements
+- **Major (X.0.0)**: Breaking changes, major rewrites
+
+### Auto-Updates for Users
+
+Once users install from GitHub:
+- Tampermonkey checks GitHub daily for new versions
 - Compares `@version` numbers
 - Downloads from `@downloadURL` if newer version available
+- User gets "Update available" notification
+- One-click update
 
 ## GitHub Integration
 
