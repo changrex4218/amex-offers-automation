@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amex Offers Automation
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Automatically add all Amex offers to all cards
 // @author       changrex4218
 // @match        https://global.americanexpress.com/offers*
