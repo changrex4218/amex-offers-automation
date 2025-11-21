@@ -306,6 +306,11 @@ class AmexUI {
     }
 }
 
+// Export for @require usage (local development)
+if (typeof window !== 'undefined') {
+    window.AmexUI = AmexUI;
+}
+
 // Export
 if (typeof window !== 'undefined') {
     window.AmexUI = AmexUI;

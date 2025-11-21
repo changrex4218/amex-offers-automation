@@ -91,6 +91,19 @@ async function safeExecute(fn, context, fallback) {
     }
 }
 
+// Export for @require usage (local development)
+if (typeof window !== 'undefined') {
+    window.AmexUtils = {
+        delay,
+        log,
+        logError,
+        logWarn,
+        waitForElement,
+        waitForElementWithFallbacks,
+        safeExecute
+    };
+}
+
 // Export for use in other modules
 if (typeof window !== 'undefined') {
     window.AmexUtils = {

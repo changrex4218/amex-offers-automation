@@ -376,6 +376,11 @@ class AmexOfferAutomation {
     }
 }
 
+// Export for @require usage (local development)
+if (typeof window !== 'undefined') {
+    window.AmexOfferAutomation = AmexOfferAutomation;
+}
+
 // Export
 if (typeof window !== 'undefined') {
     window.AmexOfferAutomation = AmexOfferAutomation;

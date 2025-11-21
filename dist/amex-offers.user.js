@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amex Offers Automation
 // @namespace    http://tampermonkey.net/
-// @version      1.0.5
+// @version      1.0.0
 // @description  Automatically add all Amex offers to all cards
 // @author       changrex4218
 // @match        https://global.americanexpress.com/offers*
@@ -109,6 +109,19 @@
             logError(`Error in ${context}:`, error);
             return fallback;
         }
+    }
+    
+    // Export for @require usage (local development)
+    if (typeof window !== 'undefined') {
+        window.AmexUtils = {
+            delay,
+            log,
+            logError,
+            logWarn,
+            waitForElement,
+            waitForElementWithFallbacks,
+            safeExecute
+        };
     }
 
     // ===== amex-core.js =====
@@ -488,6 +501,11 @@
         setState(updates) {
             Object.assign(this.state, updates);
         }
+    }
+    
+    // Export for @require usage (local development)
+    if (typeof window !== 'undefined') {
+        window.AmexOfferAutomation = AmexOfferAutomation;
     }
 
     // ===== google-sheets.js =====
@@ -895,6 +913,11 @@
             alert(`Results Summary:\n\nTotal: ${results.length}\nSuccessful: ${successCount}\nFailed: ${errorCount}\n\nSee console for details.`);
         }
     }
+    
+    // Export for @require usage (local development)
+    if (typeof window !== 'undefined') {
+        window.AmexUI = AmexUI;
+    }
 
 (function() {
     'use strict';
@@ -1168,5 +1191,4 @@
         selectors: AMEX_SELECTORS
     };
 
-})();
 })();
