@@ -588,6 +588,285 @@ async function analyzeAddOfferWorkflow(page, offerAnalysis) {
   };
 }
 
+/**
+ * Generates comprehensive markdown documentation from analysis results
+ * Creates a ready-to-use selector map and detailed documentation
+ * 
+ * @param {Object} analysis - Complete analysis results
+ * @param {Object} analysis.cardAnalysis - Card detection results
+ * @param {Object} analysis.offerAnalysis - Offer detection results
+ * @param {Object} analysis.workflowAnalysis - Workflow analysis results
+ * @param {Array} analysis.apiCalls - API calls captured during page load
+ * @returns {string} Markdown formatted documentation
+ */
+function generateAnalysisDocument(analysis) {
+  const { cardAnalysis, offerAnalysis, workflowAnalysis, apiCalls } = analysis;
+  const timestamp = new Date().toISOString();
+  
+  // Build fallback arrays for selectors
+  const merchantNameFallbacks = [
+    'h3', 'h2', '[class*="merchant"]', '[class*="title"]',
+    '[data-testid*="merchant"]', '[data-testid*="title"]'
+  ];
+  
+  const addButtonFallbacks = [
+    'button[aria-label*="add"]', 'button:has-text("Add")',
+    'button[data-testid*="add"]', 'button[class*="add"]', 'button'
+  ];
+  
+  const alreadyAddedFallbacks = [
+    '[aria-label*="added"]', '[class*="added"]',
+    '[data-testid*="added"]', 'button[disabled]', '[class*="enrolled"]'
+  ];
+  
+  const successIndicatorFallbacks = [
+    '[role="alert"]', '[class*="success"]', '[class*="notification"]',
+    '[class*="toast"]', '[class*="message"]', '[aria-live="polite"]'
+  ];
+  
+  // Generate AMEX_SELECTORS JavaScript object
+  const selectorsObject = `const AMEX_SELECTORS = {
+  page: {
+    url: 'https://global.americanexpress.com/offers',
+    urlPattern: 'https://global.americanexpress.com/offers*'
+  },
+  cards: {
+    switcher: '${cardAnalysis.switcherSelector || 'select'}',
+    switcherType: '${cardAnalysis.switcherType || 'select'}',
+    switchMethod: '${cardAnalysis.switchMethod || 'value'}'
+  },
+  offers: {
+    container: '${offerAnalysis.offerContainerSelector || '[data-testid*="offer"]'}',
+    card: '${offerAnalysis.offerContainerSelector || '[data-testid*="offer"]'}',
+    merchantName: '${offerAnalysis.merchantNameSelector || 'h3'}',
+    merchantNameFallbacks: ${JSON.stringify(merchantNameFallbacks, null, 6)},
+    addButton: '${offerAnalysis.addButtonSelector || 'button'}',
+    addButtonFallbacks: ${JSON.stringify(addButtonFallbacks, null, 6)},
+    alreadyAdded: '${offerAnalysis.alreadyAddedSelector || '[class*="added"]'}',
+    alreadyAddedFallbacks: ${JSON.stringify(alreadyAddedFallbacks, null, 6)}
+  },
+  feedback: {
+    success: '${workflowAnalysis.successIndicator || '[role="alert"]'}',
+    successFallbacks: ${JSON.stringify(successIndicatorFallbacks, null, 6)}
+  },
+  timing: {
+    betweenOffers: ${workflowAnalysis.recommendedDelay || 1500},
+    afterCardSwitch: ${(workflowAnalysis.recommendedDelay || 1500) * 2},
+    waitForLoad: 3000,
+    elementTimeout: 10000
+  }
+};`;
+  
+  // Generate markdown documentation
+  const markdown = `# Amex Offers Page Structure Analysis
+
+**Generated:** ${timestamp}  
+**Page URL:** https://global.americanexpress.com/offers
+
+---
+
+## Summary
+
+This document contains the discovered page structure and selectors for automating the Amex Offers system. The analysis was performed using Playwright to identify all interactive elements and their optimal selectors.
+
+### Key Findings
+
+- **Cards Detected:** ${cardAnalysis.cards.length}
+- **Card Switcher Type:** ${cardAnalysis.switcherType}
+- **Offers Found:** ${offerAnalysis.offerCount}
+- **API Calls Captured:** ${apiCalls.length + workflowAnalysis.apiCalls.length}
+- **Recommended Delay:** ${workflowAnalysis.recommendedDelay}ms between offer additions
+
+---
+
+## URL Structure
+
+**Base URL:** https://global.americanexpress.com/offers
+
+The page uses query parameters to identify specific credit cards:
+- Account selection is handled via the card switcher UI element
+- Each card has a unique identifier in the switcher value
+
+---
+
+## Card Switching
+
+### Switcher Element
+
+**Type:** ${cardAnalysis.switcherType}  
+**Selector:** \`${cardAnalysis.switcherSelector}\`  
+**Switch Method:** ${cardAnalysis.switchMethod}
+
+### Detected Cards
+
+${cardAnalysis.cards.length > 0 ? cardAnalysis.cards.map((card, index) => 
+  `${index + 1}. **${card.text}**${card.selected ? ' _(currently selected)_' : ''}
+   - Value: \`${card.value}\``
+).join('\n') : '_No cards detected_'}
+
+### How to Switch Cards
+
+${cardAnalysis.switcherType === 'select' ? 
+`\`\`\`javascript
+// For select dropdown
+const switcher = document.querySelector('${cardAnalysis.switcherSelector}');
+switcher.value = '${cardAnalysis.cards[0]?.value || 'CARD_VALUE'}';
+switcher.dispatchEvent(new Event('change', { bubbles: true }));
+\`\`\`` :
+`\`\`\`javascript
+// For ${cardAnalysis.switcherType} switcher
+const switcher = document.querySelector('${cardAnalysis.switcherSelector}');
+switcher.click();
+\`\`\``}
+
+---
+
+## Offers Structure
+
+### Container Element
+
+**Selector:** \`${offerAnalysis.offerContainerSelector}\`  
+**Offers Found:** ${offerAnalysis.offerCount}
+
+### Offer Card Elements
+
+Each offer card contains the following elements:
+
+#### Merchant Name
+- **Primary Selector:** \`${offerAnalysis.merchantNameSelector}\`
+- **Fallback Selectors:** ${merchantNameFallbacks.map(s => `\`${s}\``).join(', ')}
+
+#### Add Button
+- **Primary Selector:** \`${offerAnalysis.addButtonSelector}\`
+- **Fallback Selectors:** ${addButtonFallbacks.map(s => `\`${s}\``).join(', ')}
+
+#### Already Added Indicator
+- **Primary Selector:** \`${offerAnalysis.alreadyAddedSelector}\`
+- **Fallback Selectors:** ${alreadyAddedFallbacks.map(s => `\`${s}\``).join(', ')}
+
+${offerAnalysis.sampleHTML ? `### Sample Offer HTML
+
+\`\`\`html
+${offerAnalysis.sampleHTML}...
+\`\`\`
+` : ''}
+
+---
+
+## Add Offer Workflow
+
+### API Calls
+
+${workflowAnalysis.apiCalls.length > 0 ? 
+`The following API calls were captured during offer addition:
+
+${workflowAnalysis.apiCalls.map((call, index) => 
+  `${index + 1}. **${call.method}** \`${call.url}\`
+   - Status: ${call.status}
+   - Time: +${call.timeSinceClick}ms after click`
+).join('\n')}` :
+'_No API calls captured during workflow analysis_'}
+
+### Success Indicators
+
+**Primary Selector:** \`${workflowAnalysis.successIndicator || 'Not detected'}\`  
+**Fallback Selectors:** ${successIndicatorFallbacks.map(s => `\`${s}\``).join(', ')}
+
+${workflowAnalysis.merchantName ? `**Test Offer:** ${workflowAnalysis.merchantName}` : ''}
+
+### Timing Recommendations
+
+- **Between Offers:** ${workflowAnalysis.recommendedDelay}ms
+- **After Card Switch:** ${(workflowAnalysis.recommendedDelay || 1500) * 2}ms (2x offer delay)
+- **Page Load Wait:** 3000ms
+- **Element Timeout:** 10000ms
+
+${workflowAnalysis.requiresConfirmation ? 
+`⚠️ **Confirmation Required:** The workflow detected a confirmation dialog. The automation script will need to handle this.` : 
+`✅ **No Confirmation:** Offers can be added without additional confirmation dialogs.`}
+
+---
+
+## Selector Map for Tampermonkey Script
+
+Copy the following JavaScript object into your Tampermonkey script:
+
+\`\`\`javascript
+${selectorsObject}
+\`\`\`
+
+---
+
+## Usage Notes
+
+### Selector Priority
+
+The automation script should:
+1. Try the primary selector first
+2. If not found, iterate through fallback selectors in order
+3. Log a warning if no selector succeeds
+
+### Error Handling
+
+- Wait up to 10 seconds for elements to appear
+- Continue to next offer if one fails
+- Log all errors for debugging
+
+### Rate Limiting
+
+- Use the recommended delays to avoid rate limiting
+- Monitor for 429 status codes in API responses
+- Increase delays if rate limiting is detected
+
+### Authentication
+
+- User must be logged in before automation starts
+- Session must remain valid throughout automation
+- Script should detect logout and pause
+
+---
+
+## Recommendations
+
+1. **Test First:** Run automation on one card before processing all cards
+2. **Monitor Console:** Watch for errors and API failures
+3. **Verify Selectors:** If page structure changes, re-run this analyzer
+4. **Backup Results:** Export results JSON after each run
+5. **Rate Limiting:** If you encounter errors, increase the timing delays
+
+---
+
+## Page Load API Calls
+
+${apiCalls.length > 0 ?
+`The following API calls were captured during initial page load:
+
+${apiCalls.slice(0, 10).map((call, index) => 
+  `${index + 1}. **${call.method}** \`${call.url}\`
+   - Status: ${call.status}`
+).join('\n')}
+
+${apiCalls.length > 10 ? `\n_...and ${apiCalls.length - 10} more calls_` : ''}` :
+'_No API calls captured during page load_'}
+
+---
+
+## Next Steps
+
+1. **Review this document** to ensure all selectors were discovered correctly
+2. **Copy the AMEX_SELECTORS object** into your Tampermonkey script
+3. **Install the script** in your browser using Tampermonkey
+4. **Test the automation** on the Amex offers page
+5. **Run validation tests** using Playwright to verify functionality
+
+---
+
+*This analysis was generated automatically by the Amex Offers Page Analyzer.*
+`;
+  
+  return markdown;
+}
+
 // Run the analyzer if this file is executed directly
 if (require.main === module) {
   analyzeAmexOffersPage()
@@ -598,6 +877,55 @@ if (require.main === module) {
       console.log(`🎁 Detected ${offerAnalysis.offerCount} offers`);
       console.log(`🔄 Workflow API calls: ${workflowAnalysis.apiCalls.length}`);
       console.log(`⏱️  Recommended delay: ${workflowAnalysis.recommendedDelay}ms`);
+      
+      // Generate documentation
+      console.log('\n📝 Generating documentation...');
+      const analysisData = {
+        cardAnalysis,
+        offerAnalysis,
+        workflowAnalysis,
+        apiCalls
+      };
+      
+      const markdown = generateAnalysisDocument(analysisData);
+      
+      // Create docs directory if it doesn't exist
+      const docsDir = path.join(__dirname, '..', 'docs');
+      if (!fs.existsSync(docsDir)) {
+        fs.mkdirSync(docsDir, { recursive: true });
+        console.log('✅ Created docs/ directory');
+      }
+      
+      // Save markdown documentation
+      const markdownPath = path.join(docsDir, 'page-structure.md');
+      fs.writeFileSync(markdownPath, markdown, 'utf8');
+      console.log(`✅ Saved documentation to ${markdownPath}`);
+      
+      // Save JSON structured data
+      const jsonData = {
+        timestamp: new Date().toISOString(),
+        url: 'https://global.americanexpress.com/offers',
+        cardAnalysis,
+        offerAnalysis,
+        workflowAnalysis,
+        apiCalls: {
+          pageLoad: apiCalls,
+          workflow: workflowAnalysis.apiCalls
+        }
+      };
+      
+      const jsonPath = path.join(docsDir, 'page-structure.json');
+      fs.writeFileSync(jsonPath, JSON.stringify(jsonData, null, 2), 'utf8');
+      console.log(`✅ Saved structured data to ${jsonPath}`);
+      
+      console.log('\n🎉 Analysis complete! Files saved:');
+      console.log(`   📄 ${markdownPath}`);
+      console.log(`   📄 ${jsonPath}`);
+      console.log('\nNext steps:');
+      console.log('   1. Review the generated documentation');
+      console.log('   2. Copy AMEX_SELECTORS into your Tampermonkey script');
+      console.log('   3. Test the automation');
+      
       console.log('\nBrowser will remain open for further analysis...');
       console.log('Press Ctrl+C to close when done.\n');
     })
@@ -607,4 +935,10 @@ if (require.main === module) {
     });
 }
 
-module.exports = { analyzeAmexOffersPage, analyzeCardElements, analyzeOfferElements, analyzeAddOfferWorkflow };
+module.exports = { 
+  analyzeAmexOffersPage, 
+  analyzeCardElements, 
+  analyzeOfferElements, 
+  analyzeAddOfferWorkflow,
+  generateAnalysisDocument 
+};
