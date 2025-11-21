@@ -807,6 +807,224 @@
     // ORCHESTRATION
     // ============================================================================
 
+    /**
+     * Main automation function that processes all cards and all offers
+     * Orchestrates the entire workflow: iterate through cards, detect offers, add offers
+     * @param {Array<Object>} cards - Array of card objects from detectAllCards()
+     * @returns {Promise<Array<Object>>} Array of result objects
+     */
+    async function automateAllOffersAllCards(cards) {
+        log('='.repeat(60));
+        log('Starting automation for all cards and offers');
+        log('='.repeat(60));
+
+        // Validate input
+        if (!cards || cards.length === 0) {
+            logError('No cards provided to automation function');
+            return [];
+        }
+
+        // Initialize results array and totalOffers counter
+        const results = [];
+        let totalOffers = 0;
+
+        // Set automation state
+        setState({
+            isRunning: true,
+            isPaused: false,
+            results: [],
+            totalOffers: 0
+        });
+
+        try {
+            // Outer loop: iterate through each card sequentially
+            for (let cardIndex = 0; cardIndex < cards.length; cardIndex++) {
+                const card = cards[cardIndex];
+
+                // Update current card index in state
+                setState({ currentCardIndex: cardIndex });
+
+                log('-'.repeat(60));
+                log(`Processing Card ${cardIndex + 1}/${cards.length}: ${card.name}`);
+                log('-'.repeat(60));
+
+                // Update progress UI with current card information
+                updateProgress(
+                    `Processing card ${cardIndex + 1}/${cards.length}: ${card.name}`,
+                    (cardIndex / cards.length) * 100
+                );
+
+                // Switch to the current card using switchToCard()
+                const switchSuccess = await switchToCard(card);
+
+                if (!switchSuccess) {
+                    logError(`Failed to switch to card: ${card.name}. Skipping this card.`);
+                    continue; // Skip to next card
+                }
+
+                // Detect offers for current card using detectOffersForCurrentCard()
+                const offers = await detectOffersForCurrentCard();
+
+                // Increment totalOffers counter
+                totalOffers += offers.length;
+                setState({ totalOffers: totalOffers });
+
+                log(`Found ${offers.length} available offers for ${card.name}`);
+
+                if (offers.length === 0) {
+                    log(`No offers to add for ${card.name}, moving to next card`);
+                    continue; // Skip to next card
+                }
+
+                // Inner loop: iterate through offers for current card
+                for (let offerIndex = 0; offerIndex < offers.length; offerIndex++) {
+                    const offer = offers[offerIndex];
+
+                    // Check if automation should pause or stop
+                    if (state.isPaused) {
+                        log('Automation paused by user');
+                        while (state.isPaused && state.isRunning) {
+                            await delay(500); // Wait while paused
+                        }
+                        log('Automation resumed');
+                    }
+
+                    if (!state.isRunning) {
+                        log('Automation stopped by user');
+                        break; // Exit inner loop
+                    }
+
+                    // Calculate progress percentage
+                    const cardProgress = (offerIndex / offers.length) * 100;
+                    const overallProgress = ((cardIndex + (offerIndex / offers.length)) / cards.length) * 100;
+
+                    // Update progress UI with current offer number and percentage
+                    updateProgress(
+                        `Card ${cardIndex + 1}/${cards.length}: Adding offer ${offerIndex + 1}/${offers.length} - ${offer.merchant}`,
+                        overallProgress
+                    );
+
+                    log(`  [${offerIndex + 1}/${offers.length}] Adding: ${offer.merchant}`);
+
+                    // Call addOfferToCard() for each offer
+                    const result = await addOfferToCard(offer, card);
+
+                    // Add result to results array using addResult()
+                    // Note: addResult() is already called inside addOfferToCard(),
+                    // but we also collect results here for the return value
+                    results.push(result);
+
+                    // Continue to next offer even if one fails
+                    // (error handling is done inside addOfferToCard)
+                }
+
+                // Check if automation was stopped during inner loop
+                if (!state.isRunning) {
+                    log('Automation stopped by user');
+                    break; // Exit outer loop
+                }
+
+                log(`Completed processing ${card.name}: ${offers.length} offers processed`);
+            }
+
+            // Calculate total successful additions from results array
+            const successCount = results.filter(r => r.success).length;
+            const errorCount = results.filter(r => !r.success).length;
+
+            log('='.repeat(60));
+            log('Automation Complete!');
+            log(`Total cards processed: ${cards.length}`);
+            log(`Total offers found: ${totalOffers}`);
+            log(`Total offers processed: ${results.length}`);
+            log(`Successful additions: ${successCount}`);
+            log(`Failed additions: ${errorCount}`);
+            log('='.repeat(60));
+
+            // Update progress UI with completion message
+            updateProgress(
+                `Automation complete! Successfully added ${successCount} offers`,
+                100
+            );
+
+            // Call showCompletionNotification() with results
+            showCompletionNotification(results);
+
+            // Return results array
+            return results;
+
+        } catch (error) {
+            logError('Error during automation:', error);
+            
+            // Update progress UI with error message
+            updateProgress(`Automation error: ${error.message}`, 0);
+
+            return results;
+
+        } finally {
+            // Reset automation state
+            setState({
+                isRunning: false,
+                isPaused: false
+            });
+
+            log('Automation state reset');
+        }
+    }
+
+    /**
+     * Update progress UI with current status and percentage
+     * @param {string} message - Status message to display
+     * @param {number} percentage - Progress percentage (0-100)
+     */
+    function updateProgress(message, percentage) {
+        // This is a placeholder function that will be implemented in the UI section
+        // For now, just log the progress
+        log(`Progress: ${percentage.toFixed(1)}% - ${message}`);
+        
+        // TODO: Update actual UI elements when UI is implemented
+        // - Update status message text in progress panel
+        // - Update progress bar width based on percentage
+        // - Update percentage display text
+    }
+
+    /**
+     * Show completion notification to user
+     * @param {Array<Object>} results - Array of result objects
+     */
+    function showCompletionNotification(results) {
+        // Calculate success count from results array
+        const successCount = results.filter(r => r.success).length;
+        const totalCount = results.length;
+
+        const message = `Amex Offers Automation Complete!\n\nSuccessfully added ${successCount} out of ${totalCount} offers.`;
+
+        log('Showing completion notification:', message);
+
+        // Use GM_notification to display browser notification
+        if (typeof GM_notification !== 'undefined') {
+            GM_notification({
+                title: 'Amex Offers Automation',
+                text: `Successfully added ${successCount} out of ${totalCount} offers`,
+                timeout: 10000, // Show for 10 seconds
+                onclick: function() {
+                    // Focus the window when notification is clicked
+                    window.focus();
+                }
+            });
+        } else {
+            // Fallback: use browser's native notification API
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Amex Offers Automation', {
+                    body: `Successfully added ${successCount} out of ${totalCount} offers`,
+                    icon: 'https://www.americanexpress.com/favicon.ico'
+                });
+            } else {
+                // Fallback: use alert
+                alert(message);
+            }
+        }
+    }
+
     // ============================================================================
     // UI COMPONENTS
     // ============================================================================
@@ -825,6 +1043,9 @@
         detectOffersForCurrentCard,
         switchToCard,
         addOfferToCard,
+        automateAllOffersAllCards,
+        updateProgress,
+        showCompletionNotification,
         getState,
         setState,
         resetState,
