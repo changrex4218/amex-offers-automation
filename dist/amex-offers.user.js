@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amex Offers Automation
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.0
 // @description  Automatically add all Amex offers to all cards
 // @author       changrex4218
 // @match        https://global.americanexpress.com/offers*
@@ -917,7 +917,7 @@
 
     console.log('[Amex Auto] Script loaded (Development Version)');
 
-    // Configuration - Selector Map
+    // Configuration - Selector Map (Discovered from actual Amex page)
     const AMEX_SELECTORS = {
         page: {
             url: 'https://global.americanexpress.com/offers',
@@ -927,54 +927,66 @@
             switcher: '[role="combobox"]',
             switcherType: 'combobox',
             switcherFallbacks: [
-                'select[data-testid="card-selector"]',
-                'select.card-switcher',
-                '[role="tablist"]',
-                '.card-selector'
+                'combobox',
+                '[aria-label*="manage your other accounts"]'
+            ],
+            listbox: '[role="listbox"]',
+            listboxFallbacks: [
+                '[role="menu"]',
+                '.account-selector-menu'
+            ],
+            option: '[role="option"]',
+            optionFallbacks: [
+                'li',
+                'a[href*="account_key"]'
             ]
         },
         offers: {
-            container: '[data-testid="offers-container"]',
+            container: 'main',
             containerFallbacks: [
-                '.offers-list',
-                '#offers-container',
-                '[role="list"]',
-                'main',
-                '.main-content'
+                '[role="main"]',
+                'main > div'
             ],
-            card: '[data-testid="offer-card"]',
+            card: 'main > div > div > div > div',
             cardFallbacks: [
-                '.offer-card',
-                '.offer-item',
-                '[role="listitem"]',
+                'main div:has(h3):has(button)',
+                'main > div > div > div',
                 '[class*="offer"]'
             ],
-            merchantName: '[data-testid="merchant-name"]',
+            merchantName: 'h3',
             merchantNameFallbacks: [
-                '.merchant-name',
-                '.offer-merchant',
-                'h3',
-                'h4'
+                'heading[level="3"]',
+                '[role="heading"][aria-level="3"]'
             ],
-            addButton: 'button[data-testid="add-offer"]',
+            offerDetails: 'h3 ~ div',
+            offerDetailsFallbacks: [
+                'div:has(h3) > div:nth-child(2)'
+            ],
+            expiration: 'p',
+            expirationFallbacks: [
+                'paragraph',
+                '*:has-text("Expires")'
+            ],
+            addButton: 'button:has-text("add to list card")',
             addButtonFallbacks: [
-                'button.add-offer',
-                'button[aria-label*="Add"]',
-                'button:has-text("Add")'
+                'button[aria-label*="add"]',
+                'button:has(img):not(:has-text("View Details"))'
             ],
-            alreadyAdded: '[data-testid="offer-added"]',
+            alreadyAdded: 'button[disabled]:has-text("add")',
             alreadyAddedFallbacks: [
-                '.offer-added',
                 'button[disabled]',
-                '[aria-label*="Added"]'
-            ]
+                '[aria-label*="Added"]',
+                '*:has-text("Added to Card")'
+            ],
+            viewDetailsButton: 'button:has-text("View Details")',
+            termsButton: 'button:has-text("Terms apply")'
         },
         feedback: {
-            success: '[data-testid="success-notification"]',
+            success: '[role="alert"]',
             successFallbacks: [
                 '.success-message',
-                '[role="alert"]',
-                '.notification'
+                '[class*="success"]',
+                '[class*="notification"]'
             ]
         },
         timing: {
