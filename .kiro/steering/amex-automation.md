@@ -76,17 +76,25 @@ build.js                  # Build script (bundles src/ into dist/)
    git push origin main
    ```
 
-5. **Install/Update Script - AUTOMATIC via Playwright**
+5. **Install/Update Script - MANUAL STEP (Cannot be automated)**
    
+   **IMPORTANT:** This step requires Tampermonkey extension to be installed in your browser. Playwright/automated browsers cannot install browser extensions, so this must be done manually.
+   
+   **Manual Installation Steps:**
+   1. Open your regular browser (Chrome/Firefox/Edge) with Tampermonkey installed
+   2. Navigate to: `https://raw.githubusercontent.com/changrex4218/amex-offers-automation/main/dist/amex-offers.user.js`
+   3. Tampermonkey will detect the .user.js file and show an installation page
+   4. Click "Install" or "Update" button
+   5. Confirm the script is installed in Tampermonkey dashboard
+   
+   **For Testing with Playwright:**
    ```javascript
-   // Navigate to GitHub raw URL - Tampermonkey auto-installs/updates
+   // Navigate to GitHub raw URL - shows Tampermonkey installation page
    await page.goto('https://raw.githubusercontent.com/changrex4218/amex-offers-automation/main/dist/amex-offers.user.js');
    
-   // Tampermonkey automatically detects .user.js and installs/updates
-   // No user interaction needed - happens automatically in background
+   // NOTE: Playwright cannot click Install/Update because Tampermonkey extension
+   // is not available in automated browsers. This step must be done manually.
    ```
-   
-   **This step is AUTOMATIC - user never needs to click anything!**
 
 6. **CRITICAL: Refresh Page Before Testing**
    ```javascript
