@@ -9,8 +9,8 @@
 // @require      file:///C:/Users/weiwe/Projects/tempmonkey script to add and store all amex offers/src/lib/amex-core.js
 // @require      file:///C:/Users/weiwe/Projects/tempmonkey script to add and store all amex offers/src/lib/google-sheets.js
 // @require      file:///C:/Users/weiwe/Projects/tempmonkey script to add and store all amex offers/src/lib/ui-components.js
-// @updateURL    https://raw.githubusercontent.com/changrex4218/amex-offers-automation/main/dist/amex-offers.user.js
-// @downloadURL  https://raw.githubusercontent.com/changrex4218/amex-offers-automation/main/dist/amex-offers.user.js
+// NOTE: updateURL and downloadURL removed for local development to prevent auto-updates
+// For production version, these point to GitHub
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue

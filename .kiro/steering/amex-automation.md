@@ -52,7 +52,41 @@ build.js                  # Build script (bundles src/ into dist/)
 
 ## Development Workflow (Complete Loop)
 
-### The Complete Test-Deploy-Verify Loop
+### Option 1: Local Development (Fastest - No Build/Deploy Needed)
+
+**Use this for rapid development and testing:**
+
+1. **Setup Local Version in Tampermonkey**
+   - Open Tampermonkey dashboard
+   - Create new script or edit existing
+   - Copy contents of `src/main.user.js`
+   - **IMPORTANT:** Update the `@require` paths to match your local machine:
+   ```javascript
+   // @require file:///C:/Users/YOUR_USERNAME/Projects/YOUR_PROJECT_PATH/src/lib/utils.js
+   // @require file:///C:/Users/YOUR_USERNAME/Projects/YOUR_PROJECT_PATH/src/lib/amex-core.js
+   // @require file:///C:/Users/YOUR_USERNAME/Projects/YOUR_PROJECT_PATH/src/lib/google-sheets.js
+   // @require file:///C:/Users/YOUR_USERNAME/Projects/YOUR_PROJECT_PATH/src/lib/ui-components.js
+   ```
+   - Enable "Allow access to file URLs" in Tampermonkey extension settings
+   - Save the script
+
+2. **Edit and Test Immediately**
+   - Edit any file in `src/lib/*.js`
+   - Save the file
+   - Refresh the Amex offers page
+   - Changes load immediately - no build or deploy needed!
+
+3. **Benefits of Local Development**
+   - ✅ Instant feedback - just save and refresh
+   - ✅ No build step required
+   - ✅ No GitHub push needed
+   - ✅ Perfect for rapid iteration and debugging
+
+**Note:** Local version uses `@version 1.0.0-dev` to avoid conflicts with production version.
+
+### Option 2: Production Deployment (For Publishing Updates)
+
+**Use this when ready to deploy to users:**
 
 **Critical:** Always follow this complete loop for every change:
 
